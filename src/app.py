@@ -39,7 +39,7 @@ def pdf_read(pdf_doc):
 
 
 def main():
-    def main_page():
+    def home_page():
         #Create two columns
         col1, col2 = st.columns([0.5, 10])
 
@@ -66,7 +66,7 @@ def main():
             st.bar_chart(city_counts)
 
         # Create a sidebar to choose the company or city
-        choice = st.sidebar.radio("Menu", ["Company", "City"])
+        choice = st.sidebar.radio("Menu", ["Company", "City", "Category"])
 
 
         if choice == "City":
@@ -78,16 +78,16 @@ def main():
             if st.sidebar.checkbox("Show All Data"):
                 # Display the data in an expander
                 with st.expander("View Data"):
-                    st.dataframe(data,
-                                 column_config={"Website2": st.column_config.LinkColumn("Company Website")}
+                    st.dataframe(data[["Category", "Companies", "Description", "City", "Location", "Website", "Contact"]],
+                                 column_config={"Website": st.column_config.LinkColumn("Company Website")}
                                  )
                     df = data
             else:
                 # Display the data in an expander
                 with st.expander("View Data"):
                     city_df = data[data["City"] == selected_city]
-                    st.dataframe(city_df,
-                                 column_config={"Website2": st.column_config.LinkColumn("Company Website")}
+                    st.dataframe(city_df[["Category", "Companies", "Description", "City", "Location", "Website", "Contact"]],
+                                 column_config={"Website": st.column_config.LinkColumn("Company Website")}
                                  )
                     df = city_df
             
@@ -100,18 +100,39 @@ def main():
             if st.sidebar.checkbox("Show All Data"):
                 # Display the data in an expander
                 with st.expander("View Data"):
-                    st.dataframe(data,
-                                 column_config={"Website2": st.column_config.LinkColumn("Company Website")}
+                    st.dataframe(data[["Category", "Companies", "Description", "City", "Location", "Website", "Contact"]],
+                                 column_config={"Website": st.column_config.LinkColumn("Company Website")}
                                  )
                     df = data
             else:
                 # Display the data in an expander
                 with st.expander("View Data"):
                     company_df = data[data["Companies"] == selected_company]
-                    st.dataframe(company_df,
-                                 column_config={"Website2": st.column_config.LinkColumn("Company Website")}
+                    st.dataframe(company_df[["Category", "Companies", "Description", "City", "Location", "Website", "Contact"]],
+                                 column_config={"Website": st.column_config.LinkColumn("Company Website")}
                                  )
                     df = company_df
+
+        elif choice == "Category":   
+            category_list = data["Category"].unique().tolist()
+            selected_category = st.sidebar.selectbox("Select a Category", category_list, index=None) 
+
+            # Create checkbox to show all data
+            if st.sidebar.checkbox("Show All Data"):
+                # Display the data in an expander
+                with st.expander("View Data"):
+                    st.dataframe(data[["Category", "Companies", "Description", "City", "Location", "Website", "Contact"]],
+                                 column_config={"Website": st.column_config.LinkColumn("Company Website")}
+                                 )
+                    df = data
+            else:
+                # Display the data in an expander
+                with st.expander("View Data"):
+                    category_df = data[data["Category"] == selected_category]
+                    st.dataframe(category_df[["Category", "Companies", "Description", "City", "Location", "Website", "Contact"]],
+                                 column_config={"Website": st.column_config.LinkColumn("Company Website")}
+                                 )
+                    df = category_df
             
 
         with col2:
@@ -126,7 +147,8 @@ def main():
                     lat="Latitude",
                     lon="Longitude",
                     hover_name="Companies",
-                    hover_data={"Latitude": False, "Longitude": False, "Location": True, "City": True, "Website2": True},
+                    hover_data={"Latitude": False, "Longitude": False, "Location": True, 
+                                "Website": True, "Contact": True, "Category": True},
                     zoom=2,
                     height=300,
                     center={"lat": -25.2744, "lon": 133.7751}  # Center on Australia
@@ -146,7 +168,8 @@ def main():
                     lat="Latitude",
                     lon="Longitude",
                     hover_name="Companies",
-                    hover_data={"Latitude": False, "Longitude": False, "Location": True, "City": True, "Website2": True},
+                    hover_data={"Latitude": False, "Longitude": False, "Location": True, 
+                                "Website": True, "Contact": True, "Category": True},
                     zoom=2,
                     height=300,
                     center={"lat": -25.2744, "lon": 133.7751}  # Center on Australia
@@ -159,6 +182,27 @@ def main():
                     # Display the map in the Streamlit app
                     st.plotly_chart(fig, key="map")
 
+            elif choice == "Category":
+                    # Create a Plotly map
+                    fig = px.scatter_mapbox(
+                    df,
+                    lat="Latitude",
+                    lon="Longitude",
+                    hover_name="Companies",
+                    hover_data={"Latitude": False, "Longitude": False, "Location": True, 
+                                "Website": True, "Contact": True, "Category": True},
+                    zoom=2,
+                    height=300,
+                    center={"lat": -25.2744, "lon": 133.7751}  # Center on Australia
+                    )
+
+                    fig.update_layout(mapbox_style="open-street-map")
+                    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+
+
+                    # Display the map in the Streamlit app
+                    st.plotly_chart(fig, key="map")
+
         
 
         
@@ -166,7 +210,7 @@ def main():
 
 
 
-    def second_page():
+    def LLM_chatbot():
 
         # Create two columns
         col1, col2 = st.columns([1, 3])
@@ -186,7 +230,7 @@ def main():
 
         with st.sidebar:
             st.title("Menu:")
-            pdf_doc = st.file_uploader("Upload your PDF Files and Click on the Submit & Process Button", accept_multiple_files=True)
+            pdf_doc = st.file_uploader("Upload your PDF Files and Click on the Submit & Process Button", type="pdf")
             if st.button("Submit & Process"):
                 with st.spinner("Processing..."):
                     raw_text = pdf_read(pdf_doc)
@@ -195,12 +239,12 @@ def main():
                     st.success("Done")
 
     # Page navigation
-    page = st.sidebar.selectbox("Select a page", ["Main Page", "Second Page"])
+    page = st.sidebar.selectbox("Select a page", ["Home Page", "LLM Chatbot"])
 
-    if page == "Main Page":
-        main_page()
+    if page == "Home Page":
+        home_page()
     else:
-        second_page()
+        LLM_chatbot()
 
     # if __name__ == "__main__":
     #     if page == "Main Page":
