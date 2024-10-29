@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np 
 import spacy
+import os
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_community.embeddings.spacy_embeddings import SpacyEmbeddings
@@ -27,9 +28,24 @@ def vector_store(text_chunks):
 
 
 def get_conversational_chain(tools,ques):
+    # Load environment variables from .env file
+    load_dotenv()
+
+    # Retrieve the API token from environment variables
+    openai_api = os.getenv('OPENAI_API_TOKEN')
+
+    if not openai_api:
+        st.sidebar.error('API key is missing. Please set the OPENAI_API_TOKEN in the .env file.')
+        return None
+    
     #os.environ["ANTHROPIC_API_KEY"]=os.getenv["ANTHROPIC_API_KEY"]
     #llm = ChatAnthropic(model="claude-3-sonnet-20240229", temperature=0, api_key=os.getenv("ANTHROPIC_API_KEY"),verbose=True)
-    llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0, api_key=os.getenv("OPENAI_API_KEY"),verbose=True)
+    try:
+        llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0, api_key=openai_api, verbose=True)
+    except Exception as e:
+        st.sidebar.error(f'Error initializing ChatOpenAI: {e}')
+        return None
+    #llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0, api_key=os.getenv("OPENAI_API_TOKEN"),verbose=True)
     prompt = ChatPromptTemplate.from_messages(
     [
         (
@@ -53,9 +69,6 @@ def get_conversational_chain(tools,ques):
 
 
 def user_input(user_question):
-    
-    
-    
     new_db = FAISS.load_local("faiss_db", embeddings,allow_dangerous_deserialization=True)
     
     retriever=new_db.as_retriever()
