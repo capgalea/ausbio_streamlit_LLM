@@ -1,5 +1,6 @@
 import streamlit as st
 import chat
+import os
 from chat import get_conversational_chain
 from PyPDF2 import PdfReader
 import pandas as pd
@@ -8,6 +9,7 @@ import spacy
 import plotly.express as px
 from streamlit_plotly_events import plotly_events
 from langchain_community.embeddings.spacy_embeddings import SpacyEmbeddings
+from dotenv import load_dotenv
 
 # Set the page configuration
 import os
@@ -29,13 +31,16 @@ def make_clickable(url):
 data = load_csv("data/bioTech_data.csv")
 
 # Read the PDF files
-def pdf_read(pdf_doc):
+def pdf_read(pdf_docs):
     text = ""
-    for pdf in pdf_doc:
+    for pdf in pdf_docs:
+        pdf.seek(0)  # Reset the file pointer to the beginning
         pdf_reader = PdfReader(pdf)
         for page in pdf_reader.pages:
             text += page.extract_text()
     return text
+
+
 
 
 def main():
@@ -211,6 +216,21 @@ def main():
 
 
     def LLM_chatbot():
+        with st.sidebar:
+                st.title("Menu:")
+                pdf_docs = st.file_uploader("Upload your PDF Files and Click on the Submit & Process Button", type="pdf", accept_multiple_files=True)
+                if st.button("Submit & Process"):
+                    if pdf_docs:
+                        with st.spinner("Processing..."):
+                            raw_text = ""
+                            for pdf in pdf_docs:
+                                pdf.seek(0)  # Reset the file pointer to the beginning
+                                raw_text += pdf_read([pdf])
+                            text_chunks = chat.get_chunks(raw_text)
+                            chat.vector_store(text_chunks)
+                            st.success("Done")
+                    else:
+                        st.error("Please upload at least one PDF file.")
 
         # Create two columns
         col1, col2 = st.columns([1, 3])
@@ -227,16 +247,22 @@ def main():
 
         if user_question:
             chat.user_input(user_question)
-
-        with st.sidebar:
-            st.title("Menu:")
-            pdf_doc = st.file_uploader("Upload your PDF Files and Click on the Submit & Process Button", type="pdf")
-            if st.button("Submit & Process"):
-                with st.spinner("Processing..."):
-                    raw_text = pdf_read(pdf_doc)
-                    text_chunks = chat.get_chunks(raw_text)
-                    chat.vector_store(text_chunks)
-                    st.success("Done")
+            
+        # with st.sidebar:
+        #     st.title("Menu:")
+        #     pdf_docs = st.file_uploader("Upload your PDF Files and Click on the Submit & Process Button", type="pdf", accept_multiple_files=True)
+        #     if st.button("Submit & Process"):
+        #         if pdf_docs:
+        #             with st.spinner("Processing..."):
+        #                 raw_text = ""
+        #                 for pdf in pdf_docs:
+        #                     pdf.seek(0)  # Reset the file pointer to the beginning
+        #                     raw_text += pdf_read([pdf])
+        #                 text_chunks = chat.get_chunks(raw_text)
+        #                 chat.vector_store(text_chunks)
+        #                 st.success("Done")
+        #         else:
+        #             st.error("Please upload at least one PDF file.")
 
     # Page navigation
     page = st.sidebar.selectbox("Select a page", ["Home Page", "LLM Chatbot"])
