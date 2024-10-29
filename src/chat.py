@@ -13,7 +13,7 @@ from langchain_anthropic import ChatAnthropic
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 
-
+# Load the spacy model
 embeddings = SpacyEmbeddings(model_name="en_core_web_sm")
 
 def get_chunks(text):
@@ -28,14 +28,12 @@ def vector_store(text_chunks):
 
 
 def get_conversational_chain(tools,ques):
-    # Load environment variables from .env file
-    load_dotenv()
 
-    # Retrieve the API token from environment variables
-    openai_api = os.getenv('OPENAI_API_TOKEN')
+    # Import OpenAI token from toml file
+    openai_api = st.secrets["OPENAI_API_TOKEN"]
 
     if not openai_api:
-        st.sidebar.error('API key is missing. Please set the OPENAI_API_TOKEN in the .env file.')
+        st.sidebar.error('API key is missing. Please set the OPENAI_API_TOKEN in the /src/.streamlit/secrets.toml file.')
         return None
     
     #os.environ["ANTHROPIC_API_KEY"]=os.getenv["ANTHROPIC_API_KEY"]
@@ -45,7 +43,7 @@ def get_conversational_chain(tools,ques):
     except Exception as e:
         st.sidebar.error(f'Error initializing ChatOpenAI: {e}')
         return None
-    #llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0, api_key=os.getenv("OPENAI_API_TOKEN"),verbose=True)
+
     prompt = ChatPromptTemplate.from_messages(
     [
         (
