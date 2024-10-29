@@ -214,7 +214,6 @@ def main():
  
 
 
-
     def LLM_chatbot():
         with st.sidebar:
                 st.title("Menu:")
@@ -271,12 +270,6 @@ def main():
         home_page()
     else:
         LLM_chatbot()
-
-    # if __name__ == "__main__":
-    #     if page == "Main Page":
-    #         main_page()
-    #     else:
-    #         second_page()
 
 if __name__ == "__main__":
     main()
