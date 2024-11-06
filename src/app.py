@@ -10,6 +10,8 @@ import plotly.express as px
 from streamlit_plotly_events import plotly_events
 from langchain_community.embeddings.spacy_embeddings import SpacyEmbeddings
 from dotenv import load_dotenv
+import requests
+from bs4 import BeautifulSoup
 
 # Set the page configuration
 import os
@@ -23,12 +25,12 @@ def load_csv(file):
     df = pd.read_csv(file)
     return df
 
-# Function to convert URLs to Markdown hyperlinks
-def make_clickable(url):
-    return f'<a href="{url}" target="_blank">{url}</a>'
-
 # Load the data
 data = load_csv("data/bioTech_data.csv")
+
+# Function to convert URLs to Markdown hyperlinks
+def make_clickable(url_companies):
+    return f'<a href="{url_companies}" target="_blank">{url_companies}</a>'
 
 # Read the PDF files
 def pdf_read(pdf_docs):
@@ -40,11 +42,36 @@ def pdf_read(pdf_docs):
             text += page.extract_text()
     return text
 
+# # Import webpages to RAG
+# def import_webpage_to_rag(url_rag):
+#     reader = WebpageLoader()
+#     text = reader.read(url_rag)
+#     text_chunks = chat.get_chunks(text)
+#     chat.vector_store(text_chunks)
+#     st.success("Webpage imported successfully!")
+
+def import_webpage_to_rag(url_csv):
+
+    # Fetch the webpage content
+    response = requests.get(url_csv)
+    if response.status_code != 200:
+        st.error(f"Failed to retrieve the webpage: {response.status_code}")
+        return
+
+    # Parse the webpage content
+    soup = BeautifulSoup(response.content, 'html.parser')
+    text = soup.get_text()
+
+    # Split the text into chunks and store in vector store
+    text_chunks = chat.get_chunks(text)
+    chat.vector_store(text_chunks)
+    st.success("Webpage content imported successfully into the RAG model.")
 
 
 
 def main():
     def home_page():
+
         #Create two columns
         col1, col2 = st.columns([0.5, 10])
 
@@ -83,16 +110,16 @@ def main():
             if st.sidebar.checkbox("Show All Data"):
                 # Display the data in an expander
                 with st.expander("View Data"):
-                    st.dataframe(data[["Category", "Companies", "Description", "City", "Location", "Website", "Contact"]],
-                                 column_config={"Website": st.column_config.LinkColumn("Company Website")}
+                    st.dataframe(data[["Category", "Companies", "Description", "City", "Location", "url", "Contact"]],
+                                 column_config={"url": st.column_config.LinkColumn("Company Website")}
                                  )
                     df = data
             else:
                 # Display the data in an expander
                 with st.expander("View Data"):
                     city_df = data[data["City"] == selected_city]
-                    st.dataframe(city_df[["Category", "Companies", "Description", "City", "Location", "Website", "Contact"]],
-                                 column_config={"Website": st.column_config.LinkColumn("Company Website")}
+                    st.dataframe(city_df[["Category", "Companies", "Description", "City", "Location", "url", "Contact"]],
+                                 column_config={"url": st.column_config.LinkColumn("Company Website")}
                                  )
                     df = city_df
             
@@ -105,16 +132,16 @@ def main():
             if st.sidebar.checkbox("Show All Data"):
                 # Display the data in an expander
                 with st.expander("View Data"):
-                    st.dataframe(data[["Category", "Companies", "Description", "City", "Location", "Website", "Contact"]],
-                                 column_config={"Website": st.column_config.LinkColumn("Company Website")}
+                    st.dataframe(data[["Category", "Companies", "Description", "City", "Location", "url", "Contact"]],
+                                 column_config={"url": st.column_config.LinkColumn("Company Website")}
                                  )
                     df = data
             else:
                 # Display the data in an expander
                 with st.expander("View Data"):
                     company_df = data[data["Companies"] == selected_company]
-                    st.dataframe(company_df[["Category", "Companies", "Description", "City", "Location", "Website", "Contact"]],
-                                 column_config={"Website": st.column_config.LinkColumn("Company Website")}
+                    st.dataframe(company_df[["Category", "Companies", "Description", "City", "Location", "url", "Contact"]],
+                                 column_config={"url": st.column_config.LinkColumn("Company Website")}
                                  )
                     df = company_df
 
@@ -126,16 +153,16 @@ def main():
             if st.sidebar.checkbox("Show All Data"):
                 # Display the data in an expander
                 with st.expander("View Data"):
-                    st.dataframe(data[["Category", "Companies", "Description", "City", "Location", "Website", "Contact"]],
-                                 column_config={"Website": st.column_config.LinkColumn("Company Website")}
+                    st.dataframe(data[["Category", "Companies", "Description", "City", "Location", "url", "Contact"]],
+                                 column_config={"url": st.column_config.LinkColumn("Company Website")}
                                  )
                     df = data
             else:
                 # Display the data in an expander
                 with st.expander("View Data"):
                     category_df = data[data["Category"] == selected_category]
-                    st.dataframe(category_df[["Category", "Companies", "Description", "City", "Location", "Website", "Contact"]],
-                                 column_config={"Website": st.column_config.LinkColumn("Company Website")}
+                    st.dataframe(category_df[["Category", "Companies", "Description", "City", "Location", "url", "Contact"]],
+                                 column_config={"url": st.column_config.LinkColumn("Company Website")}
                                  )
                     df = category_df
             
@@ -153,7 +180,7 @@ def main():
                     lon="Longitude",
                     hover_name="Companies",
                     hover_data={"Latitude": False, "Longitude": False, "Location": True, 
-                                "Website": True, "Contact": True, "Category": True},
+                                "url": True, "Contact": True, "Category": True},
                     zoom=2,
                     height=300,
                     center={"lat": -25.2744, "lon": 133.7751}  # Center on Australia
@@ -174,7 +201,7 @@ def main():
                     lon="Longitude",
                     hover_name="Companies",
                     hover_data={"Latitude": False, "Longitude": False, "Location": True, 
-                                "Website": True, "Contact": True, "Category": True},
+                                "url": True, "Contact": True, "Category": True},
                     zoom=2,
                     height=300,
                     center={"lat": -25.2744, "lon": 133.7751}  # Center on Australia
@@ -195,7 +222,7 @@ def main():
                     lon="Longitude",
                     hover_name="Companies",
                     hover_data={"Latitude": False, "Longitude": False, "Location": True, 
-                                "Website": True, "Contact": True, "Category": True},
+                                "url": True, "Contact": True, "Category": True},
                     zoom=2,
                     height=300,
                     center={"lat": -25.2744, "lon": 133.7751}  # Center on Australia
@@ -230,6 +257,19 @@ def main():
                             st.success("Done")
                     else:
                         st.error("Please upload at least one PDF file.")
+                url_file = st.file_uploader("Upload a CSV file containing URLs", type="csv")
+                if st.button("Import URLs from CSV to RAG"):
+                    if url_file:
+                        with st.spinner("Processing..."):
+                            url_df = pd.read_csv(url_file)
+                            if 'url' in url_df.columns:
+                                for url in url_df['url']:
+                                    import_webpage_to_rag(url)
+                                st.success("All URLs imported successfully!")
+                            else:
+                                st.error("The CSV file must contain a column named 'url'.")
+                    else:
+                        st.error("Please upload a CSV file containing URLs.")
 
         # Create two columns
         col1, col2 = st.columns([1, 3])
