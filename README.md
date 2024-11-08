@@ -6,7 +6,6 @@
 
 This allows users to search for details regarding Australian BioTech companies.
 
-```markdown
 # Simple To-Do List App
 
 This repository contains a simple to-do list application built with [mention the technologies used, e.g., HTML, CSS, JavaScript, React, Vue, etc.].  It allows users to add, remove, and mark tasks as complete.
@@ -106,7 +105,7 @@ Project Link: [Project Link]
 ## Acknowledgments
 
 * [List any libraries or resources used, and link to them if appropriate. E.g.  Inspiration from..., Built with Create React App...]
-```
+
 
 
 Remember to replace the bracketed placeholders with your specific information.  This detailed README will help other developers (and your future self) understand and work with your project easily.  You can adjust sections as needed for your particular project.
