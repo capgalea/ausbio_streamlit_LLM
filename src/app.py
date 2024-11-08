@@ -42,31 +42,35 @@ def pdf_read(pdf_docs):
             text += page.extract_text()
     return text
 
-# # Import webpages to RAG
-# def import_webpage_to_rag(url_rag):
-#     reader = WebpageLoader()
-#     text = reader.read(url_rag)
-#     text_chunks = chat.get_chunks(text)
-#     chat.vector_store(text_chunks)
-#     st.success("Webpage imported successfully!")
 
-def import_webpage_to_rag(url_csv):
+# Initialize a global list to store text chunks from all URLs
+all_text_chunks = []
 
-    # Fetch the webpage content
-    response = requests.get(url_csv)
-    if response.status_code != 200:
-        st.error(f"Failed to retrieve the webpage: {response.status_code}")
-        return
+def import_webpage_to_rag(url, verify_ssl=True):
+    try:
+        response = requests.get(url, verify=verify_ssl)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.content, 'html.parser')
+            text = soup.get_text()
+            text_chunks = chat.get_chunks(text)
+            all_text_chunks.extend(text_chunks)  # Accumulate text chunks
+            chat.vector_store(all_text_chunks)  # Store accumulated text chunks
+            st.success(f"Webpage {url} imported successfully!")
+        elif response.status_code == 403:
+            st.error(f"Access to the webpage {url} is forbidden (HTTP 403).")
+        else:
+            st.error(f"Failed to retrieve webpage {url}. Status code: {response.status_code}")
+    except requests.exceptions.SSLError as e:
+        st.error(f"SSL error occurred while retrieving webpage {url}: {e}")
+    except Exception as e:
+        st.error(f"An error occurred while retrieving webpage {url}: {e}")
 
-    # Parse the webpage content
-    soup = BeautifulSoup(response.content, 'html.parser')
-    text = soup.get_text()
-
-    # Split the text into chunks and store in vector store
-    text_chunks = chat.get_chunks(text)
-    chat.vector_store(text_chunks)
-    st.success("Webpage content imported successfully into the RAG model.")
-
+def process_urls_from_dataframe(df_url):
+    if 'url' in df_url.columns:
+        for url in df_url['url'].dropna():
+            import_webpage_to_rag(url, verify_ssl=False)  # Optionally bypass SSL verification
+    else:
+        st.error("The dataframe does not contain a column named 'url'.")
 
 
 def main():
@@ -100,7 +104,7 @@ def main():
         # Create a sidebar to choose the company or city
         choice = st.sidebar.radio("Menu", ["Company", "City", "Category"])
 
-
+        # Create a sidebar to choose the company or city
         if choice == "City":
             # Create table showing the selected city
             city_list = data["City"].unique().tolist()
@@ -123,7 +127,7 @@ def main():
                                  )
                     df = city_df
             
-
+        # Create a sidebar to choose the company or city
         elif choice == "Company":   
             company_list = data["Companies"].unique().tolist()
             selected_company = st.sidebar.selectbox("Select a Company", company_list, index=None) 
@@ -144,7 +148,7 @@ def main():
                                  column_config={"url": st.column_config.LinkColumn("Company Website")}
                                  )
                     df = company_df
-
+        # Create a sidebar to choose the company or city
         elif choice == "Category":   
             category_list = data["Category"].unique().tolist()
             selected_category = st.sidebar.selectbox("Select a Category", category_list, index=None) 
@@ -172,6 +176,8 @@ def main():
             # Ensure the data contains latitude and longitude columns
             if 'Latitude' not in data.columns or 'Longitude' not in data.columns:
                 st.error("The data does not contain latitude and longitude information.")
+            
+            # Create a sidebar to choose the company or city
             elif choice == "Company":
                     # Create a Plotly map
                     fig = px.scatter_mapbox(
@@ -193,6 +199,7 @@ def main():
                     # Display the map in the Streamlit app
                     st.plotly_chart(fig, key="map")
             
+            # Create a sidebar to choose the company or city
             elif choice == "City":
                     # Create a Plotly map
                     fig = px.scatter_mapbox(
@@ -214,6 +221,7 @@ def main():
                     # Display the map in the Streamlit app
                     st.plotly_chart(fig, key="map")
 
+            # Create a sidebar to choose the company or city
             elif choice == "Category":
                     # Create a Plotly map
                     fig = px.scatter_mapbox(
@@ -240,10 +248,12 @@ def main():
         
  
 
-
+    # LLM Chatbot
     def LLM_chatbot():
         with st.sidebar:
                 st.title("Menu:")
+
+                # Upload PDF files
                 pdf_docs = st.file_uploader("Upload your PDF Files and Click on the Submit & Process Button", type="pdf", accept_multiple_files=True)
                 if st.button("Submit & Process"):
                     if pdf_docs:
@@ -257,19 +267,25 @@ def main():
                             st.success("Done")
                     else:
                         st.error("Please upload at least one PDF file.")
+
+                # Upload data from list of URLs in CSV file
                 url_file = st.file_uploader("Upload a CSV file containing URLs", type="csv")
+                df_url_file = pd.read_csv(url_file)
                 if st.button("Import URLs from CSV to RAG"):
-                    if url_file:
-                        with st.spinner("Processing..."):
-                            url_df = pd.read_csv(url_file)
-                            if 'url' in url_df.columns:
-                                for url in url_df['url']:
-                                    import_webpage_to_rag(url)
-                                st.success("All URLs imported successfully!")
-                            else:
-                                st.error("The CSV file must contain a column named 'url'.")
-                    else:
-                        st.error("Please upload a CSV file containing URLs.")
+                    # Example usage
+                    process_urls_from_dataframe(df_url_file)
+                    st.success("All URLs imported successfully!")
+                    # if url_file:
+                    #     with st.spinner("Processing..."):
+                    #         url_df = pd.read_csv(url_file)
+                    #         if 'url' in url_df.columns:
+                    #             for url in url_df['url']:
+                    #                 import_webpage_to_rag(url)
+                    #             st.success("All URLs imported successfully!")
+                    #         else:
+                    #             st.error("The CSV file must contain a column named 'url'.")
+                    # else:
+                    #     st.error("Please upload a CSV file containing URLs.")
 
         # Create two columns
         col1, col2 = st.columns([1, 3])
