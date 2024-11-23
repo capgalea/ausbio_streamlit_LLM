@@ -21,12 +21,19 @@ st.set_page_config("Australian BioTech")
 
 # Function to load the data
 @ st.cache_data
-def load_csv(file):
-    df = pd.read_csv(file)
+def load_csv(file1):
+    df = pd.read_csv(file1)
     return df
 
 # Load the data
 data = load_csv("data/bioTech_data.csv")
+
+def load_patents(file2):
+    df2 = pd.read_csv(file2)
+    return df2
+
+# Load the data
+patents = load_patents("data/patents.csv")
 
 # Function to convert URLs to Markdown hyperlinks
 def make_clickable(url_companies):
@@ -81,7 +88,7 @@ def main():
 
         with col1:
             # Add an image to the left column
-            st.image("images/AusBioTech_logo.png", width=100)   
+            st.image("images/AusBioTech_logo.png", width=150)   
 
         with col2:
             # Add a header to the right column
@@ -244,7 +251,28 @@ def main():
                     st.plotly_chart(fig, key="map")
 
         
+    def patents_page():
+        # Title of patent table
+        st.title("Patents Data")
 
+        # Create table showing patents file data
+        st.data_editor(patents)
+
+        # Create a text search box in sidebar for patents table
+        search = st.sidebar.text_input("Search", "")
+
+        # Create sidebar to filter status of patents
+        status = st.sidebar.multiselect("Filter by Status", patents["Status"].unique())
+
+        
+
+
+
+
+        
+        
+            
+       
         
  
 
@@ -320,10 +348,12 @@ def main():
         #             st.error("Please upload at least one PDF file.")
 
     # Page navigation
-    page = st.sidebar.selectbox("Select a page", ["Home Page", "LLM Chatbot"])
+    page = st.sidebar.selectbox("Select a page", ["Home Page", "Patents Page", "LLM Chatbot"])
 
     if page == "Home Page":
         home_page()
+    elif page == "Patents Page":
+        patents_page()
     else:
         LLM_chatbot()
 
