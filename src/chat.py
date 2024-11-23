@@ -13,6 +13,7 @@ from langchain_anthropic import ChatAnthropic
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 
+
 # Load the spacy model
 embeddings = SpacyEmbeddings(model_name="en_core_web_sm")
 
@@ -72,3 +73,6 @@ def user_input(user_question):
     retriever=new_db.as_retriever()
     retrieval_chain= create_retriever_tool(retriever,"pdf_extractor","This tool is to give answer to queries from the pdf")
     get_conversational_chain(retrieval_chain,user_question)
+
+
+
