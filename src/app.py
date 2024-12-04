@@ -1,3 +1,4 @@
+import getPatent  # Ensure this module is available and contains the get_patent function
 import streamlit as st
 import chat
 import os
@@ -17,7 +18,7 @@ from bs4 import BeautifulSoup
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
-st.set_page_config("Australian BioTech")
+st.set_page_config("Australian BioTech", layout='wide', initial_sidebar_state='auto')
 
 # Function to load the data
 @ st.cache_data
@@ -28,12 +29,12 @@ def load_csv(file1):
 # Load the data
 data = load_csv("data/bioTech_data.csv")
 
-def load_patents(file2):
-    df2 = pd.read_csv(file2)
-    return df2
+# def load_patents(file2):
+#     df2 = pd.read_csv(file2)
+#     return df2
 
-# Load the data
-patents = load_patents("data/patents.csv")
+# # Load the data
+# patents = load_patents("data/patents.csv")
 
 # Function to convert URLs to Markdown hyperlinks
 def make_clickable(url_companies):
@@ -51,7 +52,8 @@ def pdf_read(pdf_docs):
 
 
 # Initialize a global list to store text chunks from all URLs
-all_text_chunks = []
+if 'all_text_chunks' not in st.session_state:
+    st.session_state.all_text_chunks = []
 
 def import_webpage_to_rag(url, verify_ssl=True):
     try:
@@ -59,9 +61,9 @@ def import_webpage_to_rag(url, verify_ssl=True):
         if response.status_code == 200:
             soup = BeautifulSoup(response.content, 'html.parser')
             text = soup.get_text()
-            text_chunks = chat.get_chunks(text)
-            all_text_chunks.extend(text_chunks)  # Accumulate text chunks
-            chat.vector_store(all_text_chunks)  # Store accumulated text chunks
+            text_chunks = chat.get_chunks(text)  # Define text_chunks
+            st.session_state.all_text_chunks.extend(text_chunks)  # Accumulate text chunks
+            chat.vector_store(st.session_state.all_text_chunks)  # Store accumulated text chunks
             st.success(f"Webpage {url} imported successfully!")
         elif response.status_code == 403:
             st.error(f"Access to the webpage {url} is forbidden (HTTP 403).")
@@ -255,14 +257,66 @@ def main():
         # Title of patent table
         st.title("Patents Data")
 
-        # Create table showing patents file data
-        st.data_editor(patents)
+        # Create input box to wnter query for patents
+        query = st.text_input("Enter Title, Applicants, Application Number, PTC Number, Filing Date, Application Status", "")
+        df_patents = getPatent.get_patent(query)
 
-        # Create a text search box in sidebar for patents table
-        search = st.sidebar.text_input("Search", "")
+        # Display the filtered patents table
+        #st.dataframe(df_patents, use_container_width=True)
 
-        # Create sidebar to filter status of patents
-        status = st.sidebar.multiselect("Filter by Status", patents["Status"].unique())
+        # Flatten the applicants column
+        all_applicants = [applicant for sublist in df_patents["applicants"] for applicant in sublist]
+
+        # Create text search box in sidebar to search multiple columns in patents table. Also dropdown to filter by status, type, and applicant.
+        search = st.sidebar.text_input("Search Title, Applicants, Application Number, PTC Number, Filing Date, Application Status", key="search")
+        status = st.sidebar.multiselect("Filter by Status", df_patents["applicationStatus"].unique(), key="application_status")
+        applicant = st.sidebar.multiselect("Filter by Applicant", list(set(all_applicants)), key="patent_applicants")
+
+        
+        # Filter table by search, status, type, and applicant
+        filtered_patents = df_patents
+        if search:
+            search_terms = search.split()
+            for term in search_terms:
+                filtered_patents = df_patents[
+                df_patents.apply(lambda row: row.astype(str).str.contains(term, case=False).any(), axis=1)
+            ]
+        if status:
+            filtered_patents = df_patents[df_patents["applicationStatus"].isin(status)]
+        if applicant:
+            filtered_patents = df_patents[df_patents["applicants"].isin(applicant)]
+
+        # Display the filtered patents table
+        st.dataframe(filtered_patents, use_container_width=True)
+
+
+        # # Create a TITLE text search box in sidebar for patents table
+        # search_title = st.sidebar.text_input("Search Title or Inventor", "")
+
+        # # Create a INVENTOR text search box in sidebar for patents table
+        # #search_inventor = st.sidebar.text_input("Search Inventor", "")
+
+        # # Create sidebar to filter status of patents
+        # status = st.sidebar.multiselect("Filter by Status", patents["STATUS"].unique(), key="patent_status")
+
+        # # filter table by search and status
+        # filtered_patents = patents
+        # if search_title:
+        #     filtered_patents = filtered_patents[
+        #         filtered_patents["TITLE"].str.contains(search_title, case=False)] | filtered_patents[filtered_patents["INVENTORS"].str.contains(search_title, case=False)
+        #                      ]
+        # # elif search_inventor:
+        # #     filtered_patents = filtered_patents[filtered_patents["INVENTORS"].str.contains(search_inventor, case=False)]
+        # elif status:
+        #     filtered_patents = filtered_patents[filtered_patents["STATUS"].isin(status)]
+        # else:
+        #     filtered_patents = patents
+        # st.dataframe(filtered_patents)
+
+
+    
+
+
 
         
 
@@ -298,8 +352,8 @@ def main():
 
                 # Upload data from list of URLs in CSV file
                 url_file = st.file_uploader("Upload a CSV file containing URLs", type="csv")
-                df_url_file = pd.read_csv(url_file)
                 if st.button("Import URLs from CSV to RAG"):
+                    df_url_file = pd.read_csv(url_file)
                     # Example usage
                     process_urls_from_dataframe(df_url_file)
                     st.success("All URLs imported successfully!")
