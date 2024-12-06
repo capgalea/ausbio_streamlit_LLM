@@ -180,7 +180,6 @@ def main():
                                  )
                     df = category_df
             
-
         with col2:
             # Create plotly map showing the location of each company using the latitude and lognitude columns
             # Ensure the data contains latitude and longitude columns
@@ -254,6 +253,8 @@ def main():
                     st.plotly_chart(fig, key="map")
 
         
+
+
     def patents_page():
         # Title of patent table
         st.title("Patents Data")
@@ -270,7 +271,6 @@ def main():
         status = st.sidebar.multiselect("Filter by Status", df_patents["applicationStatus"].unique(), key="application_status")
         applicant = st.sidebar.multiselect("Filter by Applicant", list(set(all_applicants)), key="patent_applicants")
 
-        
         # Filter table by search, status, type, and applicant
         filtered_patents = df_patents
         if search:
@@ -432,9 +432,33 @@ def main():
                 'resultsSection.adverseEventsModule.seriousEvents': 'Serious Adverse Events',
                 'resultsSection.moreInfoModule.certainAgreement.restrictiveAgreement': 'Restrictive Agreement'
                 }, inplace=True)
+        
+        # Create text search box in sidebar to search multiple columns in patents table. Also dropdown to filter by status, type, and applicant.
+        search_clinicalTrials = st.sidebar.text_input("Enter a Search Term", key="search")
+        organisationClass_clinicalTrials = st.sidebar.multiselect("Filter by Organization Class", df_clinicalTrials["Organization Class"].unique(), key="organisationClass")
+        organisation_clinicalTrials = st.sidebar.multiselect("Filter by Ogranization", df_clinicalTrials["Organization Full Name"].unique(), key="organisation")
+        recruitmentStatus_clinicalTrials = st.sidebar.multiselect("Filter by Overall Recruitment Status", df_clinicalTrials["Overall Recruitment Status"].unique(), key="recruitmentStatus")
+        leadSponsor_clinicalTrials = st.sidebar.multiselect("Filter by Lead Sponsor Name", df_clinicalTrials["Lead Sponsor Name"].unique(), key="leadSponsor")
+
+        # Filter table by search, status, type, and applicant
+        filtered_clinicalTrials = df_clinicalTrials
+        if search_clinicalTrials:
+            search_terms = search_clinicalTrials.split()
+            for term in search_terms:
+                filtered_clinicalTrials = df_clinicalTrials[
+                df_clinicalTrials.apply(lambda row: row.astype(str).str.contains(term, case=False).any(), axis=1)
+            ]
+        if organisationClass_clinicalTrials:
+            filtered_clinicalTrials = df_clinicalTrials[df_clinicalTrials["Organization Class"].isin(organisationClass_clinicalTrials)]
+        if organisation_clinicalTrials:
+            filtered_clinicalTrials = df_clinicalTrials[df_clinicalTrials["Organization Full Name"].isin(organisation_clinicalTrials)]
+        if recruitmentStatus_clinicalTrials:
+            filtered_clinicalTrials = df_clinicalTrials[df_clinicalTrials["Overall Recruitment Status"].isin(recruitmentStatus_clinicalTrials)]
+        if leadSponsor_clinicalTrials:
+            filtered_clinicalTrials = df_clinicalTrials[df_clinicalTrials["Lead Sponsor Name"].isin(leadSponsor_clinicalTrials)]
             
         # Display the clinical trials data in table
-        st.dataframe(df_clinicalTrials, height=500)
+        st.dataframe(filtered_clinicalTrials, height=500)
 
 
 
@@ -493,21 +517,7 @@ def main():
         if user_question:
             chat.user_input(user_question)
             
-        # with st.sidebar:
-        #     st.title("Menu:")
-        #     pdf_docs = st.file_uploader("Upload your PDF Files and Click on the Submit & Process Button", type="pdf", accept_multiple_files=True)
-        #     if st.button("Submit & Process"):
-        #         if pdf_docs:
-        #             with st.spinner("Processing..."):
-        #                 raw_text = ""
-        #                 for pdf in pdf_docs:
-        #                     pdf.seek(0)  # Reset the file pointer to the beginning
-        #                     raw_text += pdf_read([pdf])
-        #                 text_chunks = chat.get_chunks(raw_text)
-        #                 chat.vector_store(text_chunks)
-        #                 st.success("Done")
-        #         else:
-        #             st.error("Please upload at least one PDF file.")
+        
 
     # Page navigation
     page = st.sidebar.selectbox("Select a page", ["Home Page", "Patents Page", "Clinical Trials Page", "LLM Chatbot"])
