@@ -23,12 +23,14 @@ def get_clinical_trials_data(condit, page_token=None):
             col1, col2 = st.columns(2)
             with col1:
                 if st.button("Previous Page"):
-                    st.session_state.page_token = data['previousPageToken']
+                    st.session_state.page_token = data['nextPageToken'] 
             with col2:
                 if st.button("Next Page"):
                     st.session_state.page_token = data['nextPageToken']
+
             # Flatten the nested JSON and convert to DataFrame
             df_clinicalTrials = json_normalize(data['studies'])
+            
             # Remove columns with all missing values
             df_clinicalTrials = df_clinicalTrials.dropna(axis=1, how='all')
 
