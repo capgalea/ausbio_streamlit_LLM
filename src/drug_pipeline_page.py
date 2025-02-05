@@ -4,7 +4,7 @@ import plotly.express as px
 
 def load_data():
     # Load the drug pipeline data
-    df = pd.read_csv(r'\data\Drug_Pipelines.csv')
+    df = pd.read_csv(r'..\data\Drug_Pipelines.csv')
     return df
 
 def drug_pipeline_page():
