@@ -92,7 +92,7 @@ def LLM_chatbot():
     
     with col1:
         # Add an image to the left column
-        st.image("", width=150)
+        st.image("images/LLM.jpg", width=150)
     
     with col2:
         # Add a header to the right column
