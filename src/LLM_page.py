@@ -4,6 +4,7 @@ import chat
 from PyPDF2 import PdfReader
 from bs4 import BeautifulSoup
 import requests
+#from google import genai
 
 
 # Read the PDF files
@@ -91,7 +92,7 @@ def LLM_chatbot():
     
     with col1:
         # Add an image to the left column
-        st.image("images/AusBioTech_logo.png", width=150)
+        st.image("", width=150)
     
     with col2:
         # Add a header to the right column
