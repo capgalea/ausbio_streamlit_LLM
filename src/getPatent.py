@@ -6,8 +6,12 @@ import streamlit as st
 
 def get_patent(query):
     # Import IP Australia API client ID and client secret from toml file
-    CLIENT_ID = st.secrets["CLIENT_ID"]
-    CLIENT_SECRET = st.secrets["CLIENT_SECRET"]
+    # CLIENT_ID = st.secrets["CLIENT_ID"]
+    # CLIENT_SECRET = st.secrets["CLIENT_SECRET"]
+
+    # Access the environment variables on Render.com
+    CLIENT_ID  = os.getenv("client_id")
+    CLIENT_SECRET = os.getenv("client_secret")
 
     # URL for obtaining the access token
     token_url = "https://test.api.ipaustralia.gov.au/public/external-token-api/v1/access_token"
