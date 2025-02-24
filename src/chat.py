@@ -28,8 +28,12 @@ def vector_store(text_chunks):
 
 def initialize_llm():
     """Initialize LLM based on available API keys"""
-    openai_api = st.secrets.get("OPENAI_API_TOKEN")
-    gemini_api = st.secrets.get("GEMINI_API_KEY")
+    # openai_api = st.secrets.get("OPENAI_API_TOKEN")
+    # gemini_api = st.secrets.get("GEMINI_API_KEY")
+
+    # Retrieve the API key from the environ var in Render.com file
+    openai_api = os.getenv("OPENAI_API_TOKEN")
+    gemini_api = os.getenv("GEMINI_API_KEY")
     
     # Create a radio button for model selection
     model_option = st.sidebar.radio(
