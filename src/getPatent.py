@@ -1,8 +1,8 @@
-import requests
-import pandas as pd
-from dotenv import load_dotenv
-import os
-import streamlit as st
+# import requests
+# import pandas as pd
+# from dotenv import load_dotenv
+# import os
+# import streamlit as st
 
 def get_patent(query):
     # Import IP Australia API client ID and client secret from toml file
