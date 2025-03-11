@@ -87,6 +87,18 @@ def LLM_chatbot():
                 # else:
                 #     st.error("Please upload a CSV file containing URLs.")
 
+    st.markdown("""
+    <style>
+    
+           /* Remove blank space at top and bottom */ 
+           .block-container {
+               padding-top: 2rem;
+               padding-bottom: 0rem;
+            }
+           
+    </style>
+    """, unsafe_allow_html=True)
+
     # Create two columns
     col1, col2 = st.columns([1, 3])
     
@@ -96,9 +108,10 @@ def LLM_chatbot():
     
     with col2:
         # Add a header to the right column
-        st.markdown("<h1 style='text-align: center;'>Australian Biotechnology Companies</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style=font-family:sans-serif; 'text-align: left;'>BioChat</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: left; font-family:sans-serif; color:DarkBlue'>The Australian Biotechnology ChatBot</p>", unsafe_allow_html=True)
 
-    user_question = st.text_input("Ask a Question from the PDF Files")
+    user_question = st.text_input("Ask a Question about the Australian Cell and Gene Therapy BioTech sector")
 
     if user_question:
         chat.user_input(user_question)
