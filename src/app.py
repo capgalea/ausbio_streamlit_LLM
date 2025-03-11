@@ -1,5 +1,5 @@
-import home_page
-import patents_page
+# import home_page
+# import patents_page
 import LLM_page
 import streamlit as st
 import os
