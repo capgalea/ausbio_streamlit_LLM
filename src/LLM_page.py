@@ -4,7 +4,8 @@ import chat
 from PyPDF2 import PdfReader
 from bs4 import BeautifulSoup
 import requests
-#from google import genai
+from initialize_llm import initialize_llm
+from google import genai
 
 
 # Read the PDF files
@@ -51,41 +52,55 @@ if 'all_text_chunks' not in st.session_state:
 # LLM Chatbot
 def LLM_chatbot():
     with st.sidebar:
-            st.title("Menu:")
+        st.title("Menu:")
 
-            # Upload PDF files
-            pdf_docs = st.file_uploader("Upload your PDF Files and Click on the Submit & Process Button", type="pdf", accept_multiple_files=True)
-            if st.button("Submit & Process"):
-                if pdf_docs:
-                    with st.spinner("Processing..."):
-                        raw_text = ""
-                        for pdf in pdf_docs:
-                            pdf.seek(0)  # Reset the file pointer to the beginning
-                            raw_text += pdf_read([pdf])
-                        text_chunks = chat.get_chunks(raw_text)
-                        chat.vector_store(text_chunks)
-                        st.success("Done")
-                else:
-                    st.error("Please upload at least one PDF file.")
+        
+        # Upload PDF files
+        pdf_docs = st.file_uploader("Upload your PDF Files and Click on the Submit & Process Button", type="pdf", accept_multiple_files=True)
+        if st.button("Submit & Process"):
+            if pdf_docs:
+                with st.spinner("Processing..."):
+                    raw_text = ""
+                    for pdf in pdf_docs:
+                        pdf.seek(0)  # Reset the file pointer to the beginning
+                        raw_text += pdf_read([pdf])
+                    text_chunks = chat.get_chunks(raw_text)
+                    chat.vector_store(text_chunks)
+                    st.success("Done")
+            else:
+                st.error("Please upload at least one PDF file.")
 
-            # Upload data from list of URLs in CSV file
-            url_file = st.file_uploader("Upload a CSV file containing URLs", type="csv")
-            if st.button("Import URLs from CSV to RAG"):
+        # Upload data from list of URLs in CSV file
+        url_file = st.file_uploader("Upload a CSV file containing URLs", type="csv")
+        if st.button("Import URLs from CSV to RAG"):
+            if url_file:
                 df_url_file = pd.read_csv(url_file)
                 # Example usage
                 process_urls_from_dataframe(df_url_file)
                 st.success("All URLs imported successfully!")
-                # if url_file:
-                #     with st.spinner("Processing..."):
-                #         url_df = pd.read_csv(url_file)
-                #         if 'url' in url_df.columns:
-                #             for url in url_df['url']:
-                #                 import_webpage_to_rag(url)
-                #             st.success("All URLs imported successfully!")
-                #         else:
-                #             st.error("The CSV file must contain a column named 'url'.")
-                # else:
-                #     st.error("Please upload a CSV file containing URLs.")
+            else:
+                st.error("Please upload a CSV file.")
+
+                # Create a radio button for model selection
+        model_option = st.sidebar.radio(
+            "Select Model",
+            ["GPT-4o", "Gemini-2.0"],
+            help="Choose the AI model to use for answering questions"
+        )
+
+        # Initialize the LLM and store it in session state if not already initialized or if model changed
+        if "llm" not in st.session_state or "model_option" not in st.session_state or st.session_state.model_option != model_option:
+            st.session_state.llm = initialize_llm(model_option)
+            st.session_state.model_option = model_option
+        # Display information about the selected model
+        st.markdown("---")
+        st.subheader("Model Information")
+        if model_option == "GPT-4o":
+            st.info("Using OpenAI's GPT-4o model")
+        elif model_option == "Gemini-2.0":
+            st.info("Using Google's Gemini-2.0 model")
+        st.write("LLM instance:", st.session_state.get("llm"))
+
 
     st.markdown("""
     <style>
@@ -114,4 +129,16 @@ def LLM_chatbot():
     user_question = st.text_input("Ask a Question about the Australian Cell and Gene Therapy BioTech sector")
 
     if user_question:
-        chat.user_input(user_question)
+        #chat.user_input(user_question)
+
+        response = st.session_state.llm.invoke(user_question)
+        
+        # Display the response in the app
+        if hasattr(response, 'content'):
+            # For Gemini responses which have .content attribute
+            st.markdown("### Answer:")
+            st.write(response.content)
+        else:
+            # For OpenAI and other responses 
+            st.markdown("### Answer:")
+            st.write(response)

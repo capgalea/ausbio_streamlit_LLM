@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np 
 import spacy
 import os
+from initialize_llm import initialize_llm
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_community.embeddings.spacy_embeddings import SpacyEmbeddings
@@ -13,6 +14,7 @@ from langchain_anthropic import ChatAnthropic
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.agents import AgentExecutor, create_tool_calling_agent
+from google import genai
 
 # Load the spacy model
 embeddings = SpacyEmbeddings(model_name="en_core_web_sm")
@@ -26,57 +28,12 @@ def vector_store(text_chunks):
     vector_store = FAISS.from_texts(text_chunks, embedding=embeddings)
     vector_store.save_local("faiss_db")
 
-def initialize_llm():
-    """Initialize LLM based on available API keys"""
-    # openai_api = st.secrets.get("OPENAI_API_TOKEN")
-    # gemini_api = st.secrets.get("GEMINI_API_KEY")
-
-    # Retrieve the API key from the environ var in Render.com file
-    openai_api = os.getenv("OPENAI_API_TOKEN")
-    gemini_api = os.getenv("GEMINI_API_KEY")
-    
-    # Create a radio button for model selection
-    model_option = st.sidebar.radio(
-        "Select Model",
-        ["GPT-3.5", "Gemini-2.0"],
-        help="Choose the AI model to use for answering questions"
-    )
-    
-    if model_option == "GPT-3.5":
-        if not openai_api:
-            st.sidebar.error('OpenAI API key is missing in secrets.toml')
-            return None
-        try:
-            return ChatOpenAI(
-                model_name="gpt-3.5-turbo",
-                temperature=0,
-                api_key=openai_api,
-                verbose=True
-            )
-        except Exception as e:
-            st.sidebar.error(f'Error initializing ChatOpenAI: {e}')
-            return None
-            
-    else:  # Gemini-2.0
-        if not gemini_api:
-            st.sidebar.error('Gemini API key is missing in secrets.toml')
-            return None
-        try:
-            return ChatGoogleGenerativeAI(
-                model="gemini-2.0-flash-exp",
-                temperature=0,
-                google_api_key=gemini_api,
-                convert_system_message_to_human=True,
-                verbose=True
-            )
-        except Exception as e:
-            st.sidebar.error(f'Error initializing Gemini: {e}')
-            return None
 
 def get_conversational_chain(tools, ques):
-    llm = initialize_llm()
+    # Initialize the LLM and store it in session state
+    llm = st.session_state.get("llm")
     if not llm:
-        return
+        raise Exception("LLM not initialized. Please select a model in the sidebar.")
     
     prompt = ChatPromptTemplate.from_messages(
         [

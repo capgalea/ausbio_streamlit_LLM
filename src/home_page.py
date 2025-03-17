@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import initialize_llm
 
 st.set_page_config("Australian BioTech", layout='wide', initial_sidebar_state='auto')
 
@@ -51,6 +52,8 @@ def home_page():
         st.write("Number of Companies by State")
         city_counts = data["City"].value_counts()
         st.bar_chart(city_counts)
+
+    
 
     # Create a sidebar to choose the company or city
     choice = st.sidebar.radio("Menu", ["Company", "City", "Category"])
