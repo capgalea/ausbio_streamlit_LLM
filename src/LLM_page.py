@@ -54,9 +54,8 @@ def LLM_chatbot():
     with st.sidebar:
         st.title("Menu:")
 
-        
         # Upload PDF files
-        pdf_docs = st.file_uploader("Upload your PDF Files and Click on the Submit & Process Button", type="pdf", accept_multiple_files=True)
+        pdf_docs = st.file_uploader("Upload additional PDF Files and Click on the Submit & Process Button", type="pdf", accept_multiple_files=True)
         if st.button("Submit & Process"):
             if pdf_docs:
                 with st.spinner("Processing..."):
@@ -70,18 +69,18 @@ def LLM_chatbot():
             else:
                 st.error("Please upload at least one PDF file.")
 
-        # Upload data from list of URLs in CSV file
-        url_file = st.file_uploader("Upload a CSV file containing URLs", type="csv")
-        if st.button("Import URLs from CSV to RAG"):
-            if url_file:
-                df_url_file = pd.read_csv(url_file)
-                # Example usage
-                process_urls_from_dataframe(df_url_file)
-                st.success("All URLs imported successfully!")
-            else:
-                st.error("Please upload a CSV file.")
+        # # Upload data from list of URLs in CSV file
+        # url_file = st.file_uploader("Upload a CSV file containing URLs", type="csv")
+        # if st.button("Import URLs from CSV to RAG"):
+        #     if url_file:
+        #         df_url_file = pd.read_csv(url_file)
+        #         # Example usage
+        #         process_urls_from_dataframe(df_url_file)
+        #         st.success("All URLs imported successfully!")
+        #     else:
+        #         st.error("Please upload a CSV file.")
 
-                # Create a radio button for model selection
+        # Create a radio button for model selection
         model_option = st.sidebar.radio(
             "Select Model",
             ["GPT-4o", "Gemini-2.0"],
@@ -93,13 +92,13 @@ def LLM_chatbot():
             st.session_state.llm = initialize_llm(model_option)
             st.session_state.model_option = model_option
         # Display information about the selected model
-        st.markdown("---")
-        st.subheader("Model Information")
-        if model_option == "GPT-4o":
-            st.info("Using OpenAI's GPT-4o model")
-        elif model_option == "Gemini-2.0":
-            st.info("Using Google's Gemini-2.0 model")
-        st.write("LLM instance:", st.session_state.get("llm"))
+        # st.markdown("---")
+        # st.subheader("Model Information")
+        # if model_option == "GPT-4o":
+        #     st.info("Using OpenAI's GPT-4o model")
+        # elif model_option == "Gemini-2.0":
+        #     st.info("Using Google's Gemini-2.0 model")
+        # st.write("LLM instance:", st.session_state.get("llm"))
 
 
     st.markdown("""
@@ -129,16 +128,16 @@ def LLM_chatbot():
     user_question = st.text_input("Ask a Question about the Australian Cell and Gene Therapy BioTech sector")
 
     if user_question:
-        #chat.user_input(user_question)
+        # chat.user_input(user_question)
 
         response = st.session_state.llm.invoke(user_question)
         
         # Display the response in the app
         if hasattr(response, 'content'):
             # For Gemini responses which have .content attribute
-            st.markdown("### Answer:")
+            st.markdown("### Answer (General Knowledge):")
             st.write(response.content)
         else:
             # For OpenAI and other responses 
-            st.markdown("### Answer:")
+            st.markdown("### Answer (General Knowledge):")
             st.write(response)
