@@ -8,5 +8,6 @@ langchain==0.0.134
 langchain-openai==0.0.5
 langchain_community
 langchain-google-genai==0.0.5
+langchain.tools.retriever
 faiss-cpu>=1.7.0
 spacy==3.8.4
